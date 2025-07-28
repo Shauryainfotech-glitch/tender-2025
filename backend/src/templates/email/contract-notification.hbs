@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contract {{action}}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            padding: 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .header {
+            background-color: #16a085;
+            color: white;
+            padding: 20px;
+            border-radius: 5px 5px 0 0;
+            margin: -30px -30px 20px -30px;
+            text-align: center;
+        }
+        .content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .contract-details {
+            background-color: #e8f6f3;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border: 1px solid #a2d9ce;
+        }
+        .contract-details h3 {
+            margin-top: 0;
+            color: #138d75;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #16a085;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .button:hover {
+            background-color: #138d75;
+        }
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            margin-top: 30px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-created { background-color: #3498db; color: white; }
+        .status-signed { background-color: #9b59b6; color: white; }
+        .status-approved { background-color: #27ae60; color: white; }
+        .status-rejected { background-color: #e74c3c; color: white; }
+        .status-terminated { background-color: #34495e; color: white; }
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        .info-table td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .info-table td:first-child {
+            font-weight: bold;
+            width: 40%;
+        }
+        .action-required {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .action-required h4 {
+            margin-top: 0;
+            color: #856404;
+        }
+        .timeline {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .timeline-item {
+            padding: 10px 0;
+            border-left: 3px solid #16a085;
+            padding-left: 20px;
+            margin-left: 10px;
+            position: relative;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -6px;
+            top: 15px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #16a085;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Contract {{action}}</h1>
+            <p style="margin: 0;">{{appName}}</p>
+        </div>
+        
+        <div class="content">
+            <p>Dear {{userName}},</p>
+            
+            {{#ifEquals action "Created"}}
+            <p>A new contract has been created and is ready for your review:</p>
+            {{/ifEquals}}
+            
+            {{#ifEquals action "Signed"}}
+            <p>✍️ The contract has been signed by all parties:</p>
+            {{/ifEquals}}
+            
+            {{#ifEquals action "Approved"}}
+            <p>✅ Great news! The contract has been approved:</p>
+            {{/ifEquals}}
+            
+            {{#ifEquals action "Rejected"}}
+            <p>❌ The contract has been rejected and requires attention:</p>
+            {{/ifEquals}}
+            
+            {{#ifEquals action "Terminated"}}
+            <p>⚠️ The following contract has been terminated:</p>
+            {{/ifEquals}}
+            
+            <div class="contract-details">
+                <h3>📄 Contract Details</h3>
+                <table class="info-table">
+                    <tr>
+                        <td>Contract Number:</td>
+                        <td>{{contractNumber}}</td>
+                    </tr>
+                    <tr>
+                        <td>Contract Title:</td>
+                        <td>{{contractTitle}}</td>
+                    </tr>
+                    <tr>
+                        <td>Status:</td>
+                        <td>
+                            <span class="status-badge status-{{#if (eq action 'Created')}}created{{else if (eq action 'Signed')}}signed{{else if (eq action 'Approved')}}approved{{else if (eq action 'Rejected')}}rejected{{else}}terminated{{/if}}">
+                                {{action}}
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            
+            {{#ifEquals action "Created"}}
+            <div class="action-required">
+                <h4>⚡ Action Required</h4>
+                <p>Please review the contract terms and conditions. Your signature is required to proceed.</p>
+                <ul>
+                    <li>Review all terms and conditions</li>
+                    <li>Verify payment schedules</li>
+                    <li>Check deliverables and timelines</li>
+                    <li>Sign electronically through the platform</li>
+                </ul>
+            </div>
+            {{/ifEquals}}
+            
+            {{#ifEquals action "Signed"}}
+            <div class="timeline">
+                <h4>📅 Contract Timeline</h4>
+                <div class="timeline-item">
+                    <strong>Contract Start Date:</strong> {{formatDate contractStartDate}}
+                </div>
+                <div class="timeline-item">
+                    <strong>Contract End Date:</strong> {{formatDate contractEndDate}}
+                </div>
+                <div class="timeline-item">
+                    <strong>First Deliverable Due:</strong> {{formatDate firstDeliverableDate}}
+                </div>
+            </div>
+            {{/ifEquals}}
+            
+            {{#ifEquals action "Approved"}}
+            <div style="background-color: #d5f4e6; border: 1px solid #27ae60; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                <h4 style="margin-top: 0;">🎯 What Happens Next?</h4>
+                <ol>
+                    <li>Work can commence as per the contract terms</li>
+                    <li>First milestone payment will be processed</li>
+                    <li>Regular progress reports will be required</li>
+                    <li>Performance will be monitored against KPIs</li>
+                </ol>
+            </div>
+            {{/ifEquals}}
+            
+            {{#ifEquals action "Rejected"}}
+            <div style="background-color: #fadbd8; border: 1px solid #e74c3c; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                <h4 style="margin-top: 0;">📋 Rejection Reason</h4>
+                <p>{{rejectionReason}}</p>
+                <p><strong>Next Steps:</strong> Please address the concerns raised and resubmit the contract for approval.</p>
+            </div>
+            {{/ifEquals}}
+            
+            <div style="text-align: center;">
+                <a href="{{contractUrl}}" class="button">View Contract</a>
+            </div>
+            
+            <p style="margin-top: 20px;">If you have any questions about this contract, please contact your contract manager or our support team.</p>
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated notification from {{appName}}.</p>
+            <p>Please do not reply to this email.</p>
+            <p>&copy; {{year}} {{appName}}. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

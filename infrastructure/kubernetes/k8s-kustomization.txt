@@ -1,0 +1,89 @@
+# Kustomization file for AVGC Tender Management System
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: avgc-tender-system
+
+resources:
+  # Namespace
+  - namespace.yaml
+  
+  # ConfigMaps and Secrets
+  - configmap.yaml
+  - secrets.yaml
+  
+  # Databases
+  - postgres-deployment.yaml
+  - mongodb-deployment.yaml
+  - redis-deployment.yaml
+  - elasticsearch-deployment.yaml
+  
+  # Message Queue
+  - rabbitmq-deployment.yaml
+  
+  # Core Services
+  - auth-service-deployment.yaml
+  - tender-service-deployment.yaml
+  - document-service-deployment.yaml
+  - notification-service-deployment.yaml
+  
+  # Business Services
+  - emd-service-deployment.yaml
+  - security-service-deployment.yaml
+  - reporting-service-deployment.yaml
+  
+  # API Gateway and Frontend
+  - api-gateway-deployment.yaml
+  - frontend-deployment.yaml
+  
+  # Monitoring
+  - prometheus-deployment.yaml
+  - grafana-deployment.yaml
+  
+  # Security
+  - rbac.yaml
+  - network-policies.yaml
+  
+  # Ingress
+  - ingress.yaml
+
+commonLabels:
+  app.kubernetes.io/name: avgc-tender-system
+  app.kubernetes.io/instance: production
+  app.kubernetes.io/component: backend
+  app.kubernetes.io/part-of: avgc-tender-platform
+  app.kubernetes.io/managed-by: kustomize
+
+images:
+  - name: avgc/frontend
+    newTag: latest
+  - name: avgc/api-gateway
+    newTag: latest
+  - name: avgc/auth-service
+    newTag: latest
+  - name: avgc/tender-service
+    newTag: latest
+  - name: avgc/document-service
+    newTag: latest
+  - name: avgc/notification-service
+    newTag: latest
+  - name: avgc/emd-service
+    newTag: latest
+  - name: avgc/security-service
+    newTag: latest
+  - name: avgc/reporting-service
+    newTag: latest
+
+replicas:
+  - name: frontend
+    count: 3
+  - name: api-gateway
+    count: 3
+  - name: auth-service
+    count: 3
+  - name: tender-service
+    count: 3
+  - name: emd-service
+    count: 3
+  - name: security-service
+    count: 3

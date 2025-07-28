@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workflow Approval Required</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            padding: 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .header {
+            background-color: #e74c3c;
+            color: white;
+            padding: 20px;
+            border-radius: 5px 5px 0 0;
+            margin: -30px -30px 20px -30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .urgent-badge {
+            display: inline-block;
+            background-color: #fff;
+            color: #e74c3c;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .workflow-details {
+            background-color: #ffe6e6;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border: 1px solid #ffcccc;
+        }
+        .workflow-details h3 {
+            margin-top: 0;
+            color: #c0392b;
+        }
+        .button-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            margin: 0 10px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .approve-button {
+            background-color: #27ae60;
+            color: white;
+        }
+        .approve-button:hover {
+            background-color: #229954;
+        }
+        .reject-button {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .reject-button:hover {
+            background-color: #c0392b;
+        }
+        .view-button {
+            background-color: #3498db;
+            color: white;
+        }
+        .view-button:hover {
+            background-color: #2980b9;
+        }
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        .info-table td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .info-table td:first-child {
+            font-weight: bold;
+            width: 40%;
+            color: #666;
+        }
+        .timeline {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .timeline h4 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .timeline-item {
+            padding: 8px 0;
+            border-left: 3px solid #dee2e6;
+            padding-left: 15px;
+            margin-left: 10px;
+        }
+        .timeline-item.active {
+            border-color: #e74c3c;
+            font-weight: bold;
+        }
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            margin-top: 30px;
+        }
+        .deadline-warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        .deadline-warning strong {
+            color: #856404;
+        }
+        .context-box {
+            background-color: #e8f4fd;
+            border: 1px solid #bee5eb;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔔 Approval Required</h1>
+            <span class="urgent-badge">ACTION NEEDED</span>
+        </div>
+        
+        <div class="content">
+            <p>Hi {{approverName}},</p>
+            
+            <p>Your approval is required for the following workflow step:</p>
+            
+            <div class="workflow-details">
+                <h3>📋 Workflow Details</h3>
+                <table class="info-table">
+                    <tr>
+                        <td>Step Name:</td>
+                        <td><strong>{{stepName}}</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Description:</td>
+                        <td>{{stepDescription}}</td>
+                    </tr>
+                    <tr>
+                        <td>Entity Type:</td>
+                        <td>{{entityType}}</td>
+                    </tr>
+                    <tr>
+                        <td>Reference ID:</td>
+                        <td>{{entityId}}</td>
+                    </tr>
+                    <tr>
+                        <td>Initiated By:</td>
+                        <td>{{initiatorName}}</td>
+                    </tr>
+                    <tr>
+                        <td>Date Submitted:</td>
+                        <td>{{formatDate submittedDate}}</td>
+                    </tr>
+                </table>
+            </div>
+            
+            {{#if contextData}}
+            <div class="context-box">
+                <h4>📌 Additional Context</h4>
+                {{#each contextData}}
+                <p><strong>{{@key}}:</strong> {{this}}</p>
+                {{/each}}
+            </div>
+            {{/if}}
+            
+            {{#if previousSteps}}
+            <div class="timeline">
+                <h4>🔄 Workflow Progress</h4>
+                {{#each previousSteps}}
+                <div class="timeline-item">
+                    ✓ {{this.name}} - {{this.status}} by {{this.approver}}
+                </div>
+                {{/each}}
+                <div class="timeline-item active">
+                    ⏳ {{stepName}} - Awaiting your approval
+                </div>
+            </div>
+            {{/if}}
+            
+            {{#if deadline}}
+            <div class="deadline-warning">
+                <p style="margin: 5px 0;">⏰ <strong>Response Required By:</strong></p>
+                <p style="font-size: 18px; margin: 5px 0;"><strong>{{formatDate deadline}}</strong></p>
+            </div>
+            {{/if}}
+            
+            <div class="button-container">
+                <a href="{{approvalLink}}" class="button view-button">View Details</a>
+                <a href="{{approvalLink}}?action=approve" class="button approve-button">Approve</a>
+                <a href="{{approvalLink}}?action=reject" class="button reject-button">Reject</a>
+            </div>
+            
+            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                <h4 style="margin-top: 0;">📝 Quick Actions</h4>
+                <p>You can also reply to this email with one of the following commands:</p>
+                <ul>
+                    <li><strong>APPROVE</strong> - To approve this request</li>
+                    <li><strong>REJECT [reason]</strong> - To reject with a reason</li>
+                    <li><strong>INFO</strong> - To request more information</li>
+                </ul>
+            </div>
+            
+            {{#if escalationInfo}}
+            <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 10px; border-radius: 5px;">
+                <p style="margin: 0;"><strong>⚠️ Note:</strong> If no action is taken by the deadline, this request will be automatically escalated to {{escalationInfo.escalateTo}}.</p>
+            </div>
+            {{/if}}
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated workflow notification from {{appName}}.</p>
+            <p>For assistance, contact your workflow administrator.</p>
+            <p>&copy; {{year}} {{appName}}. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

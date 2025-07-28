@@ -1,0 +1,298 @@
+# Helm Values for AVGC Tender Management System
+# This file can be used if converting to a Helm chart
+
+global:
+  namespace: avgc-tender-system
+  domain: avgc-tenders.com
+  imageRegistry: avgc
+  imageTag: latest
+  imagePullPolicy: IfNotPresent
+
+frontend:
+  enabled: true
+  replicaCount: 3
+  image:
+    repository: avgc/frontend
+    tag: latest
+  service:
+    type: ClusterIP
+    port: 80
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+
+apiGateway:
+  enabled: true
+  replicaCount: 3
+  image:
+    repository: avgc/api-gateway
+    tag: latest
+  service:
+    type: ClusterIP
+    port: 8080
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+services:
+  auth:
+    enabled: true
+    replicaCount: 3
+    image:
+      repository: avgc/auth-service
+      tag: latest
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "250m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+  
+  tender:
+    enabled: true
+    replicaCount: 3
+    image:
+      repository: avgc/tender-service
+      tag: latest
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "250m"
+      limits:
+        memory: "1Gi"
+        cpu: "500m"
+  
+  emd:
+    enabled: true
+    replicaCount: 3
+    image:
+      repository: avgc/emd-service
+      tag: latest
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "500m"
+      limits:
+        memory: "1Gi"
+        cpu: "1"
+  
+  security:
+    enabled: true
+    replicaCount: 3
+    image:
+      repository: avgc/security-service
+      tag: latest
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "250m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+  
+  reporting:
+    enabled: true
+    replicaCount: 2
+    image:
+      repository: avgc/reporting-service
+      tag: latest
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "500m"
+      limits:
+        memory: "1Gi"
+        cpu: "1"
+  
+  document:
+    enabled: true
+    replicaCount: 2
+    image:
+      repository: avgc/document-service
+      tag: latest
+    persistence:
+      enabled: true
+      size: 100Gi
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "250m"
+      limits:
+        memory: "1Gi"
+        cpu: "500m"
+  
+  notification:
+    enabled: true
+    replicaCount: 2
+    image:
+      repository: avgc/notification-service
+      tag: latest
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "200m"
+      limits:
+        memory: "512Mi"
+        cpu: "400m"
+
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: "password"
+    database: "avgc"
+  persistence:
+    enabled: true
+    size: 20Gi
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "500m"
+    limits:
+      memory: "2Gi"
+      cpu: "1"
+
+mongodb:
+  enabled: true
+  auth:
+    enabled: true
+    rootPassword: "password"
+  persistence:
+    enabled: true
+    size: 10Gi
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "500m"
+    limits:
+      memory: "2Gi"
+      cpu: "1"
+
+redis:
+  enabled: true
+  auth:
+    enabled: false
+  master:
+    persistence:
+      enabled: true
+      size: 5Gi
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "250m"
+      limits:
+        memory: "2Gi"
+        cpu: "500m"
+
+elasticsearch:
+  enabled: true
+  replicas: 1
+  minimumMasterNodes: 1
+  resources:
+    requests:
+      memory: "2Gi"
+      cpu: "1"
+    limits:
+      memory: "3Gi"
+      cpu: "2"
+  persistence:
+    enabled: true
+    size: 20Gi
+
+rabbitmq:
+  enabled: true
+  auth:
+    username: admin
+    password: password
+  persistence:
+    enabled: true
+    size: 5Gi
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+
+prometheus:
+  enabled: true
+  persistence:
+    enabled: true
+    size: 10Gi
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+
+grafana:
+  enabled: true
+  adminPassword: adminpassword
+  persistence:
+    enabled: true
+    size: 5Gi
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "200m"
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+  hosts:
+    - host: avgc-tenders.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: frontend-service
+          port: 80
+    - host: api.avgc-tenders.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: api-gateway-service
+          port: 8080
+    - host: ws.avgc-tenders.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: api-gateway-service
+          port: 8080
+  tls:
+    - secretName: avgc-tender-tls
+      hosts:
+        - avgc-tenders.com
+        - api.avgc-tenders.com
+        - ws.avgc-tenders.com
+
+networkPolicies:
+  enabled: true
+
+rbac:
+  create: true
+
+serviceAccount:
+  create: true
+  name: avgc-app-sa
+
+monitoring:
+  enabled: true
+  serviceMonitor:
+    enabled: true

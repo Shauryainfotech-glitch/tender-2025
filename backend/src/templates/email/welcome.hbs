@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to {{appName}}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            padding: 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            background-color: #3498db;
+            color: white;
+            padding: 20px;
+            border-radius: 5px 5px 0 0;
+            margin: -30px -30px 30px -30px;
+        }
+        .header h1 {
+            margin: 0;
+        }
+        .content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .button:hover {
+            background-color: #2980b9;
+        }
+        .feature-box {
+            background-color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .feature-box h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            margin-top: 30px;
+        }
+        .role-badge {
+            display: inline-block;
+            background-color: #e74c3c;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Welcome to {{appName}}!</h1>
+            <p style="margin: 0;">Your Trusted Tender Management Platform</p>
+        </div>
+        
+        <div class="content">
+            <p>Dear {{userName}},</p>
+            
+            <p>Congratulations! Your account has been successfully created. You're now registered as a <span class="role-badge">{{role}}</span> on our platform.</p>
+            
+            <h2>What's Next?</h2>
+            
+            {{#ifEquals role "BUYER"}}
+            <div class="feature-box">
+                <h3>🏢 As a Buyer, you can:</h3>
+                <ul>
+                    <li>Create and publish tenders</li>
+                    <li>Review and evaluate bids</li>
+                    <li>Manage vendor relationships</li>
+                    <li>Track contract performance</li>
+                    <li>Generate comprehensive reports</li>
+                </ul>
+            </div>
+            {{/ifEquals}}
+            
+            {{#ifEquals role "VENDOR"}}
+            <div class="feature-box">
+                <h3>🤝 As a Vendor, you can:</h3>
+                <ul>
+                    <li>Browse available tenders</li>
+                    <li>Submit competitive bids</li>
+                    <li>Manage your company profile</li>
+                    <li>Track payment status</li>
+                    <li>Build your performance history</li>
+                </ul>
+            </div>
+            {{/ifEquals}}
+            
+            {{#ifEquals role "ADMIN"}}
+            <div class="feature-box">
+                <h3>⚙️ As an Administrator, you can:</h3>
+                <ul>
+                    <li>Manage system users and roles</li>
+                    <li>Configure workflow templates</li>
+                    <li>Monitor platform activities</li>
+                    <li>Generate system-wide reports</li>
+                    <li>Manage security settings</li>
+                </ul>
+            </div>
+            {{/ifEquals}}
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <h3>Ready to get started?</h3>
+                <a href="{{loginUrl}}" class="button">Login to Your Account</a>
+            </div>
+            
+            <div class="feature-box" style="background-color: #fff3cd; border: 1px solid #ffeaa7;">
+                <h3>📚 Need Help?</h3>
+                <p>Check out our resources:</p>
+                <ul>
+                    <li><a href="{{appUrl}}/help/getting-started">Getting Started Guide</a></li>
+                    <li><a href="{{appUrl}}/help/faq">Frequently Asked Questions</a></li>
+                    <li><a href="{{appUrl}}/contact">Contact Support</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Thank you for choosing {{appName}} for your tender management needs.</p>
+            <p>&copy; {{year}} {{appName}}. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

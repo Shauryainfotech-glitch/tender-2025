@@ -1,0 +1,411 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "AVGC Tender Management Dashboard",
+    "tags": ["avgc", "tender", "production"],
+    "timezone": "Asia/Kolkata",
+    "schemaVersion": 16,
+    "version": 1,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "System Overview",
+        "type": "row",
+        "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }
+      },
+      {
+        "id": 2,
+        "title": "Service Health",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
+        "targets": [
+          {
+            "expr": "up{job=~\".*-service\"}",
+            "format": "time_series",
+            "legendFormat": "{{job}}"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "none",
+          "orientation": "horizontal",
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": false
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "API Success Rate",
+        "type": "gauge",
+        "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total{status!~\"5..\"}[5m])) / sum(rate(http_requests_total[5m])) * 100",
+            "format": "time_series"
+          }
+        ],
+        "options": {
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true
+        },
+        "fieldConfig": {
+          "defaults": {
+            "max": 100,
+            "min": 0,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "color": "red", "value": null },
+                { "color": "yellow", "value": 95 },
+                { "color": "green", "value": 99 }
+              ]
+            },
+            "unit": "percent"
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Active Users",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
+        "targets": [
+          {
+            "expr": "sum(active_users_count)",
+            "format": "time_series"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "orientation": "auto"
+        }
+      },
+      {
+        "id": 5,
+        "title": "Response Time (95th percentile)",
+        "type": "graph",
+        "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))",
+            "format": "time_series",
+            "legendFormat": "95th percentile"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "s",
+            "label": "Response Time",
+            "show": true
+          },
+          {
+            "show": false
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Business Metrics",
+        "type": "row",
+        "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 }
+      },
+      {
+        "id": 11,
+        "title": "Tenders Discovered Today",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 0, "y": 6 },
+        "targets": [
+          {
+            "expr": "increase(tenders_discovered_total[24h])",
+            "format": "time_series"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "none",
+          "orientation": "auto"
+        }
+      },
+      {
+        "id": 12,
+        "title": "Bids Submitted Today",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 6, "y": 6 },
+        "targets": [
+          {
+            "expr": "increase(bids_submitted_total[24h])",
+            "format": "time_series"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "none",
+          "orientation": "auto"
+        }
+      },
+      {
+        "id": 13,
+        "title": "EMD Transactions",
+        "type": "piechart",
+        "gridPos": { "h": 4, "w": 6, "x": 12, "y": 6 },
+        "targets": [
+          {
+            "expr": "sum by (status) (increase(emd_transactions_total[24h]))",
+            "format": "time_series",
+            "legendFormat": "{{status}}"
+          }
+        ],
+        "options": {
+          "pieType": "donut",
+          "displayLabels": ["name", "percent"],
+          "legendDisplayMode": "table",
+          "legendPlacement": "right"
+        }
+      },
+      {
+        "id": 14,
+        "title": "Bid Success Rate by Category",
+        "type": "bargauge",
+        "gridPos": { "h": 4, "w": 6, "x": 18, "y": 6 },
+        "targets": [
+          {
+            "expr": "avg by (category) (bid_success_rate)",
+            "format": "time_series",
+            "legendFormat": "{{category}}"
+          }
+        ],
+        "options": {
+          "displayMode": "gradient",
+          "orientation": "horizontal"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "max": 100,
+            "min": 0,
+            "unit": "percent"
+          }
+        }
+      },
+      {
+        "id": 20,
+        "title": "Tender Analytics",
+        "type": "row",
+        "gridPos": { "h": 1, "w": 24, "x": 0, "y": 10 }
+      },
+      {
+        "id": 21,
+        "title": "Tender Value Distribution",
+        "type": "heatmap",
+        "gridPos": { "h": 6, "w": 12, "x": 0, "y": 11 },
+        "targets": [
+          {
+            "expr": "sum by (le) (increase(tender_value_distribution_bucket[24h]))",
+            "format": "heatmap"
+          }
+        ],
+        "options": {
+          "calculate": false,
+          "cellGap": 2,
+          "color": {
+            "mode": "scheme",
+            "scheme": "Oranges"
+          }
+        }
+      },
+      {
+        "id": 22,
+        "title": "Tender Categories Trend",
+        "type": "graph",
+        "gridPos": { "h": 6, "w": 12, "x": 12, "y": 11 },
+        "targets": [
+          {
+            "expr": "sum by (category) (increase(tenders_discovered_total[1h]))",
+            "format": "time_series",
+            "legendFormat": "{{category}}"
+          }
+        ],
+        "xaxis": {
+          "mode": "time",
+          "show": true
+        },
+        "yaxes": [
+          {
+            "format": "short",
+            "label": "Tenders",
+            "show": true
+          },
+          {
+            "show": false
+          }
+        ]
+      },
+      {
+        "id": 30,
+        "title": "System Performance",
+        "type": "row",
+        "gridPos": { "h": 1, "w": 24, "x": 0, "y": 17 }
+      },
+      {
+        "id": 31,
+        "title": "Request Rate by Service",
+        "type": "graph",
+        "gridPos": { "h": 6, "w": 8, "x": 0, "y": 18 },
+        "targets": [
+          {
+            "expr": "sum by (service) (rate(http_requests_total[5m]))",
+            "format": "time_series",
+            "legendFormat": "{{service}}"
+          }
+        ],
+        "xaxis": {
+          "mode": "time",
+          "show": true
+        },
+        "yaxes": [
+          {
+            "format": "reqps",
+            "label": "Requests/sec",
+            "show": true
+          },
+          {
+            "show": false
+          }
+        ]
+      },
+      {
+        "id": 32,
+        "title": "Error Rate by Service",
+        "type": "graph",
+        "gridPos": { "h": 6, "w": 8, "x": 8, "y": 18 },
+        "targets": [
+          {
+            "expr": "sum by (service) (rate(http_requests_total{status=~\"5..\"}[5m]))",
+            "format": "time_series",
+            "legendFormat": "{{service}}"
+          }
+        ],
+        "xaxis": {
+          "mode": "time",
+          "show": true
+        },
+        "yaxes": [
+          {
+            "format": "reqps",
+            "label": "Errors/sec",
+            "show": true
+          },
+          {
+            "show": false
+          }
+        ]
+      },
+      {
+        "id": 33,
+        "title": "Database Connections",
+        "type": "graph",
+        "gridPos": { "h": 6, "w": 8, "x": 16, "y": 18 },
+        "targets": [
+          {
+            "expr": "database_connections_active",
+            "format": "time_series",
+            "legendFormat": "{{database}}"
+          }
+        ],
+        "xaxis": {
+          "mode": "time",
+          "show": true
+        },
+        "yaxes": [
+          {
+            "format": "short",
+            "label": "Connections",
+            "show": true
+          },
+          {
+            "show": false
+          }
+        ]
+      },
+      {
+        "id": 40,
+        "title": "Security & Compliance",
+        "type": "row",
+        "gridPos": { "h": 1, "w": 24, "x": 0, "y": 24 }
+      },
+      {
+        "id": 41,
+        "title": "Security Documents Status",
+        "type": "table",
+        "gridPos": { "h": 6, "w": 12, "x": 0, "y": 25 },
+        "targets": [
+          {
+            "expr": "security_documents_status",
+            "format": "table",
+            "instant": true
+          }
+        ],
+        "options": {
+          "showHeader": true
+        }
+      },
+      {
+        "id": 42,
+        "title": "Expiring Securities Alert",
+        "type": "alertlist",
+        "gridPos": { "h": 6, "w": 12, "x": 12, "y": 25 },
+        "options": {
+          "maxItems": 10,
+          "sortOrder": 1,
+          "dashboardAlerts": false,
+          "alertName": "SecurityDocumentExpiringSoon",
+          "dashboardTitle": "",
+          "folderId": null,
+          "stateFilter": {
+            "firing": true,
+            "pending": true,
+            "noData": false,
+            "normal": false
+          }
+        }
+      }
+    ],
+    "templating": {
+      "list": [
+        {
+          "name": "datasource",
+          "type": "datasource",
+          "query": "prometheus",
+          "current": {
+            "text": "Prometheus",
+            "value": "Prometheus"
+          }
+        },
+        {
+          "name": "service",
+          "type": "query",
+          "datasource": "Prometheus",
+          "query": "label_values(up{job=~\".*-service\"},job)",
+          "multi": true,
+          "includeAll": true,
+          "current": {
+            "text": "All",
+            "value": "$__all"
+          }
+        }
+      ]
+    },
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {
+      "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h"],
+      "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
+    }
+  }
+}

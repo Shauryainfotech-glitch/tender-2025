@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tender {{action}}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            padding: 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 5px 5px 0 0;
+            margin: -30px -30px 20px -30px;
+            text-align: center;
+        }
+        .content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .tender-details {
+            background-color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .tender-details h3 {
+            margin-top: 0;
+            color: #34495e;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .button:hover {
+            background-color: #2980b9;
+        }
+        .deadline {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        .deadline strong {
+            color: #e67e22;
+            font-size: 18px;
+        }
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            margin-top: 30px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-published { background-color: #27ae60; color: white; }
+        .status-updated { background-color: #3498db; color: white; }
+        .status-closing { background-color: #e74c3c; color: white; }
+        .status-extended { background-color: #f39c12; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Tender {{action}}</h1>
+            <p style="margin: 0;">{{appName}}</p>
+        </div>
+        
+        <div class="content">
+            <p>Dear {{userName}},</p>
+            
+            {{#ifEquals action "Published"}}
+            <p>A new tender has been published that may interest you:</p>
+            {{/ifEquals}}
+            
+            {{#ifEquals action "Updated"}}
+            <p>A tender you're following has been updated:</p>
+            {{/ifEquals}}
+            
+            {{#ifEquals action "Closing Soon"}}
+            <p>⚠️ <strong>Reminder:</strong> The following tender is closing soon!</p>
+            {{/ifEquals}}
+            
+            {{#ifEquals action "Extended"}}
+            <p>Good news! The deadline for the following tender has been extended:</p>
+            {{/ifEquals}}
+            
+            <div class="tender-details">
+                <h3>📋 Tender Details</h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Title:</strong></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">{{tenderTitle}}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Tender Number:</strong></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">{{tenderNumber}}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px;"><strong>Status:</strong></td>
+                        <td style="padding: 8px;">
+                            <span class="status-badge status-{{#if (eq action 'Published')}}published{{else if (eq action 'Updated')}}updated{{else if (eq action 'Closing Soon')}}closing{{else}}extended{{/if}}">
+                                {{action}}
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            
+            {{#if deadline}}
+            <div class="deadline">
+                <p style="margin: 5px 0;">📅 Submission Deadline:</p>
+                <strong>{{formatDate deadline}}</strong>
+            </div>
+            {{/if}}
+            
+            <div style="text-align: center;">
+                <a href="{{tenderUrl}}" class="button">View Tender Details</a>
+            </div>
+            
+            {{#ifEquals action "Closing Soon"}}
+            <div style="background-color: #ffe6e6; border: 1px solid #ffcccc; padding: 10px; border-radius: 5px; margin-top: 20px;">
+                <p style="margin: 0;"><strong>⏰ Act Fast!</strong> Make sure to submit your bid before the deadline.</p>
+            </div>
+            {{/ifEquals}}
+            
+            <p style="margin-top: 20px;">For any questions or assistance, please don't hesitate to contact our support team.</p>
+        </div>
+        
+        <div class="footer">
+            <p>This notification was sent to you based on your preferences in {{appName}}.</p>
+            <p>To manage your notifications, visit your <a href="{{appUrl}}/profile/notifications">notification settings</a>.</p>
+            <p>&copy; {{year}} {{appName}}. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

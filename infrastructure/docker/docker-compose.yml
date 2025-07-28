@@ -1,0 +1,216 @@
+version: '3.8'
+
+services:
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - REACT_APP_API_URL=http://localhost:8080
+      - REACT_APP_WS_URL=ws://localhost:8080
+    depends_on:
+      - api-gateway
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./backend/api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=development
+      - JWT_SECRET=${JWT_SECRET}
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+      - auth-service
+      - tender-service
+      - emd-service
+      - security-service
+      - reporting-service
+
+  # Microservices
+  auth-service:
+    build:
+      context: ./backend/services/auth-service
+    environment:
+      - DATABASE_URL=postgresql://user:pass@postgres:5432/authdb
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET}
+      - MFA_SECRET=${MFA_SECRET}
+    depends_on:
+      - postgres
+      - redis
+
+  tender-service:
+    build:
+      context: ./backend/services/tender-service
+    environment:
+      - DATABASE_URL=postgresql://user:pass@postgres:5432/tenderdb
+      - MONGODB_URL=mongodb://mongo:27017/documents
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    depends_on:
+      - postgres
+      - mongo
+      - rabbitmq
+      - elasticsearch
+
+  emd-service:
+    build:
+      context: ./backend/services/emd-service
+    environment:
+      - DATABASE_URL=postgresql://user:pass@postgres:5432/emddb
+      - PAYMENT_GATEWAY_KEY=${PAYMENT_GATEWAY_KEY}
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+
+  security-service:
+    build:
+      context: ./backend/services/security-service
+    environment:
+      - DATABASE_URL=postgresql://user:pass@postgres:5432/securitydb
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+
+  reporting-service:
+    build:
+      context: ./backend/services/reporting-service
+    environment:
+      - DATABASE_URL=postgresql://user:pass@postgres:5432/reportdb
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - elasticsearch
+      - redis
+
+  # Databases
+  postgres:
+    image: postgres:14-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=pass
+      - POSTGRES_MULTIPLE_DATABASES=authdb,tenderdb,emddb,securitydb,reportdb
+    ports:
+      - "5432:5432"
+
+  mongo:
+    image: mongo:5
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=pass
+    ports:
+      - "27017:27017"
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+
+  elasticsearch:
+    image: elasticsearch:8.5.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    volumes:
+      - elastic_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+
+  # Message Queue
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  # Monitoring
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    depends_on:
+      - api-gateway
+      - auth-service
+      - tender-service
+      - emd-service
+      - security-service
+      - reporting-service
+
+  grafana:
+    image: grafana/grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+
+  # Log Aggregation
+  loki:
+    image: grafana/loki:2.8.0
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki_data:/loki
+
+  promtail:
+    image: grafana/promtail:2.8.0
+    volumes:
+      - /var/log:/var/log
+      - ./monitoring/promtail-config.yml:/etc/promtail/config.yml
+    depends_on:
+      - loki
+
+  # Tracing
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686"
+      - "14268:14268"
+      - "14250:14250"
+      - "9411:9411"
+    environment:
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+
+volumes:
+  postgres_data:
+  mongo_data:
+  redis_data:
+  elastic_data:
+  rabbitmq_data:
+  prometheus_data:
+  grafana_data:
+  loki_data:

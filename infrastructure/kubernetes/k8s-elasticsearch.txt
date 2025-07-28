@@ -1,0 +1,81 @@
+# Elasticsearch StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: elasticsearch
+  namespace: avgc-tender-system
+spec:
+  serviceName: elasticsearch-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: elasticsearch
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+    spec:
+      containers:
+      - name: elasticsearch
+        image: elasticsearch:8.5.0
+        ports:
+        - containerPort: 9200
+        - containerPort: 9300
+        env:
+        - name: discovery.type
+          value: single-node
+        - name: xpack.security.enabled
+          value: "false"
+        - name: ES_JAVA_OPTS
+          value: "-Xms1g -Xmx1g"
+        volumeMounts:
+        - name: elasticsearch-storage
+          mountPath: /usr/share/elasticsearch/data
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1"
+          limits:
+            memory: "3Gi"
+            cpu: "2"
+        livenessProbe:
+          httpGet:
+            path: /_cluster/health
+            port: 9200
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /_cluster/health?local=true
+            port: 9200
+          initialDelaySeconds: 30
+          periodSeconds: 5
+  volumeClaimTemplates:
+  - metadata:
+      name: elasticsearch-storage
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 20Gi
+
+---
+# Elasticsearch Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch-service
+  namespace: avgc-tender-system
+spec:
+  selector:
+    app: elasticsearch
+  ports:
+  - name: http
+    protocol: TCP
+    port: 9200
+    targetPort: 9200
+  - name: transport
+    protocol: TCP
+    port: 9300
+    targetPort: 9300
+  type: ClusterIP

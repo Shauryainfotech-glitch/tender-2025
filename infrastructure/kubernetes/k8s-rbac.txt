@@ -1,0 +1,79 @@
+# RBAC Configuration for AVGC Tender System
+
+# ServiceAccount for application pods
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: avgc-app-sa
+  namespace: avgc-tender-system
+
+---
+# Role for application pods
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: avgc-app-role
+  namespace: avgc-tender-system
+rules:
+- apiGroups: [""]
+  resources: ["configmaps", "secrets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list"]
+
+---
+# RoleBinding for application pods
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: avgc-app-rolebinding
+  namespace: avgc-tender-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: avgc-app-role
+subjects:
+- kind: ServiceAccount
+  name: avgc-app-sa
+  namespace: avgc-tender-system
+
+---
+# ServiceAccount for monitoring
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: avgc-monitoring-sa
+  namespace: avgc-tender-system
+
+---
+# ClusterRole for monitoring
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: avgc-monitoring-role
+rules:
+- apiGroups: [""]
+  resources: ["nodes", "nodes/metrics", "services", "endpoints", "pods"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get"]
+- apiGroups: ["metrics.k8s.io"]
+  resources: ["pods", "nodes"]
+  verbs: ["get", "list"]
+
+---
+# ClusterRoleBinding for monitoring
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: avgc-monitoring-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: avgc-monitoring-role
+subjects:
+- kind: ServiceAccount
+  name: avgc-monitoring-sa
+  namespace: avgc-tender-system

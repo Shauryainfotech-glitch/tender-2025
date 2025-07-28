@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment {{status}}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            padding: 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .header {
+            background-color: #f39c12;
+            color: white;
+            padding: 20px;
+            border-radius: 5px 5px 0 0;
+            margin: -30px -30px 20px -30px;
+            text-align: center;
+        }
+        .content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .payment-details {
+            background-color: #fef5e7;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border: 1px solid #fcf3cf;
+        }
+        .payment-details h3 {
+            margin-top: 0;
+            color: #d68910;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #f39c12;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .button:hover {
+            background-color: #d68910;
+        }
+        .amount-display {
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #fff;
+            border: 3px solid #f39c12;
+            border-radius: 10px;
+        }
+        .amount-display .currency {
+            font-size: 20px;
+            color: #666;
+        }
+        .amount-display .amount {
+            font-size: 36px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 10px 0;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-pending { background-color: #f39c12; color: white; }
+        .status-completed { background-color: #27ae60; color: white; }
+        .status-failed { background-color: #e74c3c; color: white; }
+        .status-refunded { background-color: #3498db; color: white; }
+        .status-processing { background-color: #9b59b6; color: white; }
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        .info-table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        .info-table td:first-child {
+            font-weight: bold;
+            width: 40%;
+            color: #666;
+        }
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            margin-top: 30px;
+        }
+        .success-message {
+            background-color: #d5f4e6;
+            border: 1px solid #27ae60;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .error-message {
+            background-color: #fadbd8;
+            border: 1px solid #e74c3c;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .refund-message {
+            background-color: #d6eaf8;
+            border: 1px solid #3498db;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Payment {{status}}</h1>
+            <p style="margin: 0;">{{appName}}</p>
+        </div>
+        
+        <div class="content">
+            <p>Dear {{userName}},</p>
+            
+            {{#ifEquals status "Completed"}}
+            <div class="success-message">
+                <h3 style="margin: 0; color: #27ae60;">✅ Payment Successful!</h3>
+                <p style="margin: 5px 0;">Your payment has been processed successfully.</p>
+            </div>
+            {{/ifEquals}}
+            
+            {{#ifEquals status "Failed"}}
+            <div class="error-message">
+                <h3 style="margin: 0; color: #e74c3c;">❌ Payment Failed</h3>
+                <p style="margin: 5px 0;">We were unable to process your payment.</p>
+            </div>
+            {{/ifEquals}}
+            
+            {{#ifEquals status "Refunded"}}
+            <div class="refund-message">
+                <h3 style="margin: 0; color: #3498db;">💰 Refund Processed</h3>
+                <p style="margin: 5px 0;">Your refund has been initiated successfully.</p>
+            </div>
+            {{/ifEquals}}
+            
+            {{#ifEquals status "Pending"}}
+            <p>Your payment is currently being processed. We'll notify you once it's complete.</p>
+            {{/ifEquals}}
+            
+            <div class="amount-display">
+                <div class="currency">{{paymentType}}</div>
+                <div class="amount">{{formatCurrency amount}}</div>
+                <span class="status-badge status-{{status}}">{{status}}</span>
+            </div>
+            
+            <div class="payment-details">
+                <h3>💳 Transaction Details</h3>
+                <table class="info-table">
+                    <tr>
+                        <td>Reference Number:</td>
+                        <td>{{referenceNumber}}</td>
+                    </tr>
+                    <tr>
+                        <td>Payment Type:</td>
+                        <td>{{paymentType}}</td>
+                    </tr>
+                    <tr>
+                        <td>Transaction Date:</td>
+                        <td>{{formatDate transactionDate}}</td>
+                    </tr>
+                    <tr>
+                        <td>Payment Method:</td>
+                        <td>{{paymentMethod}}</td>
+                    </tr>
+                </table>
+            </div>
+            
+            {{#ifEquals status "Completed"}}
+            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                <h4 style="margin-top: 0;">📄 Receipt Information</h4>
+                <p>A detailed receipt has been generated for this transaction. You can download it from your account dashboard.</p>
+                <p><strong>Note:</strong> Please keep this receipt for your records and tax purposes.</p>
+            </div>
+            {{/ifEquals}}
+            
+            {{#ifEquals status "Failed"}}
+            <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                <h4 style="margin-top: 0;">🔄 Retry Payment</h4>
+                <p>Common reasons for payment failure:</p>
+                <ul>
+                    <li>Insufficient funds</li>
+                    <li>Card details incorrect</li>
+                    <li>Transaction limit exceeded</li>
+                    <li>Technical issues</li>
+                </ul>
+                <p>Please check and retry your payment.</p>
+            </div>
+            {{/ifEquals}}
+            
+            {{#ifEquals status "Refunded"}}
+            <div style="background-color: #e3f2fd; border: 1px solid #90caf9; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                <h4 style="margin-top: 0;">📅 Refund Timeline</h4>
+                <p>Your refund will be credited to your original payment method within:</p>
+                <ul>
+                    <li>Credit/Debit Cards: 5-7 business days</li>
+                    <li>Bank Transfer: 3-5 business days</li>
+                    <li>Digital Wallets: 1-2 business days</li>
+                </ul>
+            </div>
+            {{/ifEquals}}
+            
+            <div style="text-align: center;">
+                <a href="{{paymentUrl}}" class="button">View Transaction Details</a>
+            </div>
+            
+            <p style="margin-top: 20px;">If you have any questions about this transaction, please contact our finance team.</p>
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated payment notification from {{appName}}.</p>
+            <p>For payment inquiries, please contact: finance@{{appName}}.com</p>
+            <p>&copy; {{year}} {{appName}}. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

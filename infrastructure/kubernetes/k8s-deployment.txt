@@ -1,0 +1,545 @@
+# Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: avgc-tender-system
+
+---
+# ConfigMap for shared configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: avgc-tender-system
+data:
+  NODE_ENV: "production"
+  API_GATEWAY_URL: "https://api.avgc-tenders.com"
+  REDIS_HOST: "redis-service"
+  RABBITMQ_HOST: "rabbitmq-service"
+  ELASTICSEARCH_HOST: "elasticsearch-service"
+
+---
+# Secret for sensitive data
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secrets
+  namespace: avgc-tender-system
+type: Opaque
+stringData:
+  JWT_SECRET: "your-jwt-secret-here"
+  DATABASE_PASSWORD: "your-db-password"
+  PAYMENT_GATEWAY_KEY: "your-payment-key"
+  MFA_SECRET: "your-mfa-secret"
+
+---
+# Frontend Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: avgc-tender-system
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: avgc/frontend:latest
+        ports:
+        - containerPort: 80
+        env:
+        - name: REACT_APP_API_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: API_GATEWAY_URL
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+
+---
+# API Gateway Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: avgc-tender-system
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+      - name: api-gateway
+        image: avgc/api-gateway:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: NODE_ENV
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: JWT_SECRET
+        - name: REDIS_URL
+          value: "redis://redis-service:6379"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+
+---
+# Auth Service Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: avgc-tender-system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+      - name: auth-service
+        image: avgc/auth-service:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: DATABASE_URL
+          value: "postgresql://user:$(DATABASE_PASSWORD)@postgres-service:5432/authdb"
+        - name: DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: DATABASE_PASSWORD
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: JWT_SECRET
+        - name: MFA_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: MFA_SECRET
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "200m"
+
+---
+# Tender Service Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tender-service
+  namespace: avgc-tender-system
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: tender-service
+  template:
+    metadata:
+      labels:
+        app: tender-service
+    spec:
+      containers:
+      - name: tender-service
+        image: avgc/tender-service:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: DATABASE_URL
+          value: "postgresql://user:$(DATABASE_PASSWORD)@postgres-service:5432/tenderdb"
+        - name: DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: DATABASE_PASSWORD
+        - name: MONGODB_URL
+          value: "mongodb://mongo-service:27017/documents"
+        - name: RABBITMQ_URL
+          value: "amqp://rabbitmq-service:5672"
+        - name: ELASTICSEARCH_URL
+          value: "http://elasticsearch-service:9200"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+
+---
+# EMD Service Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: emd-service
+  namespace: avgc-tender-system
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: emd-service
+  template:
+    metadata:
+      labels:
+        app: emd-service
+    spec:
+      containers:
+      - name: emd-service
+        image: avgc/emd-service:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: DATABASE_URL
+          value: "postgresql://user:$(DATABASE_PASSWORD)@postgres-service:5432/emddb"
+        - name: DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: DATABASE_PASSWORD
+        - name: PAYMENT_GATEWAY_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: PAYMENT_GATEWAY_KEY
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+
+---
+# Security Service Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: security-service
+  namespace: avgc-tender-system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: security-service
+  template:
+    metadata:
+      labels:
+        app: security-service
+    spec:
+      containers:
+      - name: security-service
+        image: avgc/security-service:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: DATABASE_URL
+          value: "postgresql://user:$(DATABASE_PASSWORD)@postgres-service:5432/securitydb"
+        - name: DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: DATABASE_PASSWORD
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "200m"
+
+---
+# Reporting Service Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reporting-service
+  namespace: avgc-tender-system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: reporting-service
+  template:
+    metadata:
+      labels:
+        app: reporting-service
+    spec:
+      containers:
+      - name: reporting-service
+        image: avgc/reporting-service:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: DATABASE_URL
+          value: "postgresql://user:$(DATABASE_PASSWORD)@postgres-service:5432/reportdb"
+        - name: DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: DATABASE_PASSWORD
+        - name: ELASTICSEARCH_URL
+          value: "http://elasticsearch-service:9200"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+
+---
+# Services
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  namespace: avgc-tender-system
+spec:
+  selector:
+    app: frontend
+  ports:
+  - port: 80
+    targetPort: 80
+  type: LoadBalancer
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway-service
+  namespace: avgc-tender-system
+spec:
+  selector:
+    app: api-gateway
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: LoadBalancer
+
+---
+# Internal Services
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+  namespace: avgc-tender-system
+spec:
+  selector:
+    app: auth-service
+  ports:
+  - port: 3000
+    targetPort: 3000
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tender-service
+  namespace: avgc-tender-system
+spec:
+  selector:
+    app: tender-service
+  ports:
+  - port: 3000
+    targetPort: 3000
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: emd-service
+  namespace: avgc-tender-system
+spec:
+  selector:
+    app: emd-service
+  ports:
+  - port: 3000
+    targetPort: 3000
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: security-service
+  namespace: avgc-tender-system
+spec:
+  selector:
+    app: security-service
+  ports:
+  - port: 3000
+    targetPort: 3000
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reporting-service
+  namespace: avgc-tender-system
+spec:
+  selector:
+    app: reporting-service
+  ports:
+  - port: 3000
+    targetPort: 3000
+  type: ClusterIP
+
+---
+# Horizontal Pod Autoscaler for API Gateway
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: api-gateway-hpa
+  namespace: avgc-tender-system
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: api-gateway
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+
+---
+# HPA for Tender Service
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: tender-service-hpa
+  namespace: avgc-tender-system
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: tender-service
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+
+---
+# HPA for EMD Service
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: emd-service-hpa
+  namespace: avgc-tender-system
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: emd-service
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80

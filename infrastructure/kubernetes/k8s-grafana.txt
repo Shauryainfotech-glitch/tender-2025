@@ -1,0 +1,159 @@
+# Grafana ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-config
+  namespace: avgc-tender-system
+data:
+  grafana.ini: |
+    [server]
+    root_url = https://grafana.avgc-tenders.com
+    
+    [security]
+    admin_user = admin
+    admin_password = admin
+    
+    [auth]
+    disable_login_form = false
+    
+    [users]
+    allow_sign_up = false
+
+---
+# Grafana Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: avgc-tender-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+      - name: grafana
+        image: grafana/grafana:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: GF_SECURITY_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: grafana-secrets
+              key: admin-password
+        volumeMounts:
+        - name: grafana-config
+          mountPath: /etc/grafana
+        - name: grafana-storage
+          mountPath: /var/lib/grafana
+        - name: grafana-dashboards
+          mountPath: /var/lib/grafana/dashboards
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: grafana-config
+        configMap:
+          name: grafana-config
+      - name: grafana-storage
+        persistentVolumeClaim:
+          claimName: grafana-pvc
+      - name: grafana-dashboards
+        configMap:
+          name: grafana-dashboards
+
+---
+# Grafana Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-service
+  namespace: avgc-tender-system
+spec:
+  selector:
+    app: grafana
+  ports:
+  - protocol: TCP
+    port: 3000
+    targetPort: 3000
+  type: ClusterIP
+
+---
+# Grafana PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-pvc
+  namespace: avgc-tender-system
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+
+---
+# Grafana Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: grafana-secrets
+  namespace: avgc-tender-system
+type: Opaque
+data:
+  admin-password: YWRtaW5wYXNzd29yZA==  # adminpassword
+
+---
+# Grafana Dashboards ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  namespace: avgc-tender-system
+data:
+  avgc-tender-dashboard.json: |
+    {
+      "dashboard": {
+        "title": "AVGC Tender System Monitoring",
+        "panels": [
+          {
+            "title": "API Response Time",
+            "type": "graph"
+          },
+          {
+            "title": "Active Users",
+            "type": "stat"
+          },
+          {
+            "title": "Tender Submissions",
+            "type": "gauge"
+          },
+          {
+            "title": "EMD Transactions",
+            "type": "table"
+          }
+        ]
+      }
+    }

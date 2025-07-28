@@ -1,0 +1,217 @@
+groups:
+  - name: application_alerts
+    interval: 30s
+    rules:
+      # High Error Rate Alert
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_requests_total{status=~"5.."}[5m])) by (service)
+            /
+            sum(rate(http_requests_total[5m])) by (service)
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "High error rate detected for {{ $labels.service }}"
+          description: "{{ $labels.service }} has error rate of {{ $value | humanizePercentage }} (threshold: 5%)"
+
+      # Service Down Alert
+      - alert: ServiceDown
+        expr: up{job=~".*-service"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "{{ $labels.job }} has been down for more than 2 minutes"
+
+      # High Response Time Alert
+      - alert: HighResponseTime
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket[5m])) by (service, le)
+          ) > 2
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High response time for {{ $labels.service }}"
+          description: "95th percentile response time is {{ $value }}s (threshold: 2s)"
+
+      # High Memory Usage Alert
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            container_memory_working_set_bytes{pod=~".*-service-.*"}
+            / 
+            container_spec_memory_limit_bytes{pod=~".*-service-.*"}
+          ) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High memory usage for {{ $labels.pod }}"
+          description: "Pod {{ $labels.pod }} memory usage is {{ $value | humanizePercentage }}"
+
+      # Database Connection Pool Exhaustion
+      - alert: DatabaseConnectionPoolExhaustion
+        expr: |
+          (
+            pg_stat_database_numbackends{datname="avgc_tender"}
+            /
+            pg_settings_max_connections
+          ) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          team: database
+        annotations:
+          summary: "Database connection pool near exhaustion"
+          description: "{{ $value | humanizePercentage }} of max connections in use"
+
+      # EMD Payment Failures
+      - alert: HighEMDPaymentFailureRate
+        expr: |
+          (
+            sum(rate(emd_payment_failures_total[15m]))
+            /
+            sum(rate(emd_payment_attempts_total[15m]))
+          ) > 0.1
+        for: 10m
+        labels:
+          severity: critical
+          team: payments
+        annotations:
+          summary: "High EMD payment failure rate"
+          description: "EMD payment failure rate is {{ $value | humanizePercentage }} (threshold: 10%)"
+
+      # Security Expiry Alerts
+      - alert: SecurityDocumentExpiringS,
+        expr: |
+          count(
+            security_validity_days_remaining < 30
+          ) > 0
+        labels:
+          severity: warning
+          team: compliance
+        annotations:
+          summary: "{{ $value }} security documents expiring soon"
+          description: "{{ $value }} security documents will expire within 30 days"
+
+      # Report Generation Failures
+      - alert: ReportGenerationFailures
+        expr: |
+          sum(rate(report_generation_failures_total[30m])) > 5
+        for: 10m
+        labels:
+          severity: warning
+          team: reporting
+        annotations:
+          summary: "High report generation failure rate"
+          description: "{{ $value }} report generation failures in the last 30 minutes"
+
+      # Tender Discovery Service Health
+      - alert: TenderDiscoveryDown
+        expr: |
+          tender_discovery_last_run_timestamp < (time() - 3600)
+        for: 5m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Tender discovery service not running"
+          description: "Tender discovery service hasn't run for over 1 hour"
+
+      # High Disk Usage
+      - alert: HighDiskUsage
+        expr: |
+          (
+            node_filesystem_avail_bytes{mountpoint="/"}
+            /
+            node_filesystem_size_bytes{mountpoint="/"}
+          ) < 0.1
+        for: 5m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "High disk usage on {{ $labels.instance }}"
+          description: "Only {{ $value | humanizePercentage }} disk space remaining"
+
+  - name: business_alerts
+    interval: 5m
+    rules:
+      # Low Bid Participation Alert
+      - alert: LowBidParticipation
+        expr: |
+          avg_over_time(
+            tender_bid_participation_rate[1d]
+          ) < 0.3
+        labels:
+          severity: info
+          team: business
+        annotations:
+          summary: "Low bid participation rate"
+          description: "Average bid participation rate is {{ $value | humanizePercentage }} over the last day"
+
+      # High Value Tender Alert
+      - alert: HighValueTenderPosted
+        expr: |
+          tender_value > 100000000
+        labels:
+          severity: info
+          team: business
+        annotations:
+          summary: "High value tender posted"
+          description: "New tender with value ₹{{ $value | humanize }} posted"
+
+      # Unusual Activity Detection
+      - alert: UnusualLoginActivity
+        expr: |
+          rate(auth_login_attempts_total{status="failed"}[15m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "Unusual login activity detected"
+          description: "{{ $value }} failed login attempts per second from {{ $labels.source_ip }}"
+
+  - name: sla_alerts
+    interval: 1m
+    rules:
+      # API SLA Violation
+      - alert: APISLAViolation
+        expr: |
+          (
+            sum(rate(http_requests_total{status!~"5.."}[5m])) by (service)
+            /
+            sum(rate(http_requests_total[5m])) by (service)
+          ) < 0.995
+        for: 10m
+        labels:
+          severity: critical
+          team: platform
+          sla: "99.5%"
+        annotations:
+          summary: "SLA violation for {{ $labels.service }}"
+          description: "{{ $labels.service }} availability is {{ $value | humanizePercentage }} (SLA: 99.5%)"
+
+      # Database SLA Violation
+      - alert: DatabaseSLAViolation
+        expr: |
+          avg_over_time(up{job="postgresql"}[5m]) < 0.999
+        for: 5m
+        labels:
+          severity: critical
+          team: database
+          sla: "99.9%"
+        annotations:
+          summary: "Database SLA violation"
+          description: "Database availability is below 99.9% SLA"

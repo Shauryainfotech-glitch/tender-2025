@@ -1,0 +1,9 @@
+# Namespace for AVGC Tender Management System
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: avgc-tender-system
+  labels:
+    name: avgc-tender-system
+    app.kubernetes.io/name: avgc-tender-system
+    app.kubernetes.io/instance: production

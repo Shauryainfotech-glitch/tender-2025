@@ -1,0 +1,122 @@
+# Application
+NODE_ENV=development
+PORT=3000
+API_PREFIX=api/v1
+APP_NAME="AVGC Tender Management Platform"
+APP_URL=http://localhost:3000
+FRONTEND_URL=http://localhost:5173
+
+# Database
+DATABASE_TYPE=postgres
+DATABASE_HOST=localhost
+DATABASE_PORT=5432
+DATABASE_USERNAME=postgres
+DATABASE_PASSWORD=postgres
+DATABASE_NAME=avgc_tender_db
+DATABASE_SYNCHRONIZE=false
+DATABASE_LOGGING=true
+
+# Redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REDIS_DB=0
+
+# MongoDB (for documents)
+MONGODB_URI=mongodb://localhost:27017/avgc_documents
+
+# Elasticsearch
+ELASTICSEARCH_NODE=http://localhost:9200
+ELASTICSEARCH_USERNAME=elastic
+ELASTICSEARCH_PASSWORD=
+
+# RabbitMQ
+RABBITMQ_URL=amqp://guest:guest@localhost:5672
+RABBITMQ_QUEUE_PREFIX=avgc_
+
+# Kafka
+KAFKA_BROKERS=localhost:9092
+KAFKA_CLIENT_ID=avgc-tender-platform
+KAFKA_GROUP_ID=avgc-tender-group
+
+# JWT
+JWT_SECRET=your-super-secret-jwt-key-change-this
+JWT_EXPIRES_IN=15m
+JWT_REFRESH_SECRET=your-super-secret-refresh-key-change-this
+JWT_REFRESH_EXPIRES_IN=7d
+
+# Email
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_SECURE=false
+MAIL_USER=your-email@gmail.com
+MAIL_PASSWORD=your-app-password
+MAIL_FROM=noreply@avgctender.com
+MAIL_FROM_NAME="AVGC Tender Platform"
+
+# AWS S3 (for file storage)
+AWS_ACCESS_KEY_ID=your-aws-access-key
+AWS_SECRET_ACCESS_KEY=your-aws-secret-key
+AWS_REGION=ap-south-1
+AWS_S3_BUCKET=avgc-tender-documents
+
+# Payment Gateway - Razorpay
+RAZORPAY_KEY_ID=your-razorpay-key
+RAZORPAY_KEY_SECRET=your-razorpay-secret
+RAZORPAY_WEBHOOK_SECRET=your-webhook-secret
+
+# Payment Gateway - PayU
+PAYU_MERCHANT_KEY=your-payu-key
+PAYU_MERCHANT_SALT=your-payu-salt
+PAYU_BASE_URL=https://test.payu.in
+
+# SMS Gateway
+SMS_API_KEY=your-sms-api-key
+SMS_SENDER_ID=AVGCTN
+
+# Push Notifications
+FCM_SERVER_KEY=your-fcm-server-key
+VAPID_PUBLIC_KEY=your-vapid-public-key
+VAPID_PRIVATE_KEY=your-vapid-private-key
+
+# Security
+BCRYPT_ROUNDS=10
+RATE_LIMIT_TTL=60
+RATE_LIMIT_MAX=100
+CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+
+# Monitoring
+SENTRY_DSN=your-sentry-dsn
+NEW_RELIC_LICENSE_KEY=your-new-relic-key
+
+# Logging
+LOG_LEVEL=debug
+LOG_FILE_PATH=./logs
+
+# Cache
+CACHE_TTL=300
+CACHE_MAX=100
+
+# File Upload
+MAX_FILE_SIZE=10485760
+ALLOWED_FILE_TYPES=pdf,doc,docx,xls,xlsx,jpg,jpeg,png
+
+# Session
+SESSION_SECRET=your-session-secret-change-this
+SESSION_TIMEOUT=3600
+
+# Feature Flags
+ENABLE_WEBSOCKETS=true
+ENABLE_EMAIL_VERIFICATION=true
+ENABLE_TWO_FACTOR_AUTH=false
+ENABLE_SOCIAL_LOGIN=false
+
+# Third Party APIs
+GST_API_URL=https://api.gst.gov.in
+GST_API_KEY=your-gst-api-key
+PAN_VERIFICATION_URL=https://api.pan.gov.in
+PAN_API_KEY=your-pan-api-key
+
+# Maintenance Mode
+MAINTENANCE_MODE=false
+MAINTENANCE_MESSAGE="System under maintenance. Please try again later."

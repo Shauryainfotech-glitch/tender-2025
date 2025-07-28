@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bid {{action}}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            padding: 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .header {
+            background-color: #8e44ad;
+            color: white;
+            padding: 20px;
+            border-radius: 5px 5px 0 0;
+            margin: -30px -30px 20px -30px;
+            text-align: center;
+        }
+        .content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .bid-details {
+            background-color: #f5f3ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border: 1px solid #d4c5f9;
+        }
+        .bid-details h3 {
+            margin-top: 0;
+            color: #6c3483;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #8e44ad;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .button:hover {
+            background-color: #7d3c98;
+        }
+        .amount-box {
+            background-color: #e8f8f5;
+            border: 2px solid #27ae60;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        .amount-box .amount {
+            color: #27ae60;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            margin-top: 30px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .status-submitted { background-color: #3498db; color: white; }
+        .status-accepted { background-color: #27ae60; color: white; }
+        .status-rejected { background-color: #e74c3c; color: white; }
+        .status-withdrawn { background-color: #95a5a6; color: white; }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Bid {{action}}</h1>
+            <p style="margin: 0;">{{appName}}</p>
+        </div>
+        
+        <div class="content">
+            <p>Dear {{userName}},</p>
+            
+            {{#ifEquals action "Submitted"}}
+            <p>A new bid has been submitted for your tender:</p>
+            {{/ifEquals}}
+            
+            {{#ifEquals action "Accepted"}}
+            <p>🎉 Congratulations! Your bid has been accepted:</p>
+            {{/ifEquals}}
+            
+            {{#ifEquals action "Rejected"}}
+            <p>We regret to inform you that your bid has not been selected:</p>
+            {{/ifEquals}}
+            
+            {{#ifEquals action "Withdrawn"}}
+            <p>A bid has been withdrawn from your tender:</p>
+            {{/ifEquals}}
+            
+            <div class="bid-details">
+                <h3>📊 Bid Information</h3>
+                <div class="info-row">
+                    <span><strong>Tender Title:</strong></span>
+                    <span>{{tenderTitle}}</span>
+                </div>
+                <div class="info-row">
+                    <span><strong>Bidder Name:</strong></span>
+                    <span>{{bidderName}}</span>
+                </div>
+                <div class="info-row">
+                    <span><strong>Status:</strong></span>
+                    <span>
+                        <span class="status-badge status-{{#if (eq action 'Submitted')}}submitted{{else if (eq action 'Accepted')}}accepted{{else if (eq action 'Rejected')}}rejected{{else}}withdrawn{{/if}}">
+                            {{action}}
+                        </span>
+                    </span>
+                </div>
+            </div>
+            
+            {{#if bidAmount}}
+            <div class="amount-box">
+                <p style="margin: 5px 0;">Bid Amount:</p>
+                <div class="amount">{{formatCurrency bidAmount}}</div>
+            </div>
+            {{/if}}
+            
+            <div style="text-align: center;">
+                <a href="{{bidUrl}}" class="button">View Bid Details</a>
+            </div>
+            
+            {{#ifEquals action "Accepted"}}
+            <div style="background-color: #d5f4e6; border: 1px solid #27ae60; padding: 15px; border-radius: 5px; margin-top: 20px;">
+                <h4 style="margin-top: 0;">🚀 Next Steps:</h4>
+                <ol>
+                    <li>Contract negotiations will begin shortly</li>
+                    <li>Our team will contact you within 2 business days</li>
+                    <li>Please ensure all your documents are up to date</li>
+                </ol>
+            </div>
+            {{/ifEquals}}
+            
+            {{#ifEquals action "Rejected"}}
+            <div style="background-color: #f0f3f4; border: 1px solid #d5dbdb; padding: 15px; border-radius: 5px; margin-top: 20px;">
+                <p style="margin: 0;">Thank you for your participation. We encourage you to bid on future opportunities that match your expertise.</p>
+            </div>
+            {{/ifEquals}}
+            
+            {{#ifEquals action "Submitted"}}
+            <div style="background-color: #ebf5fb; border: 1px solid #3498db; padding: 15px; border-radius: 5px; margin-top: 20px;">
+                <p style="margin: 0;"><strong>Note:</strong> All bids will be evaluated after the submission deadline. You will be notified of the results.</p>
+            </div>
+            {{/ifEquals}}
+        </div>
+        
+        <div class="footer">
+            <p>This notification was sent from {{appName}}.</p>
+            <p>For bid-related queries, please contact our procurement team.</p>
+            <p>&copy; {{year}} {{appName}}. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

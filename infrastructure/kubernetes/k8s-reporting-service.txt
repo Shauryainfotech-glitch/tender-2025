@@ -1,0 +1,66 @@
+# Reporting Service Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reporting-service
+  namespace: avgc-tender-system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: reporting-service
+  template:
+    metadata:
+      labels:
+        app: reporting-service
+    spec:
+      containers:
+      - name: reporting-service
+        image: avgc/reporting-service:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: db-secrets
+              key: reporting-db-url
+        - name: ELASTICSEARCH_URL
+          value: "http://elasticsearch-service:9200"
+        - name: NODE_ENV
+          value: "production"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 45
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 3000
+          initialDelaySeconds: 15
+          periodSeconds: 5
+
+---
+# Reporting Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: reporting-service
+  namespace: avgc-tender-system
+spec:
+  selector:
+    app: reporting-service
+  ports:
+  - protocol: TCP
+    port: 3000
+    targetPort: 3000
+  type: ClusterIP

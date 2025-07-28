@@ -1,0 +1,103 @@
+# Document Service Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: document-service
+  namespace: avgc-tender-system
+  labels:
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: document-service
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: document-service
+        tier: backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: avgc-app-sa
+      containers:
+      - name: document-service
+        image: avgc/document-service:latest
+        ports:
+        - containerPort: 3000
+        - containerPort: 9090  # Metrics port
+        env:
+        - name: MONGODB_URL
+          value: "mongodb://mongodb-service:27017/documents"
+        - name: REDIS_URL
+          value: "redis://redis-service:6379"
+        - name: NODE_ENV
+          value: "production"
+        - name: MAX_FILE_SIZE
+          value: "52428800"  # 50MB
+        - name: ALLOWED_FILE_TYPES
+          value: "pdf,doc,docx,xls,xlsx,jpg,jpeg,png"
+        volumeMounts:
+        - name: document-storage
+          mountPath: /app/uploads
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+      volumes:
+      - name: document-storage
+        persistentVolumeClaim:
+          claimName: document-storage-pvc
+
+---
+# Document Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: document-service
+  namespace: avgc-tender-system
+spec:
+  selector:
+    app: document-service
+  ports:
+  - name: http
+    protocol: TCP
+    port: 3000
+    targetPort: 3000
+  - name: metrics
+    protocol: TCP
+    port: 9090
+    targetPort: 9090
+  type: ClusterIP
+
+---
+# Document Storage PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: document-storage-pvc
+  namespace: avgc-tender-system
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Gi
